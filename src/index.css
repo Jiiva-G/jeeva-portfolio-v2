@@ -1,0 +1,413 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Dark enterprise palette — blue is an accent, not the whole UI. */
+    --bg: 5 7 13;
+    --surface: 10 15 29;
+    --ink: 236 241 250;
+    --muted: 142 153 175;
+    --accent: 61 139 255;
+    --accent-bright: 124 182 255;
+    --line: 170 190 255;
+    color-scheme: dark;
+  }
+
+  html {
+    background: rgb(var(--bg));
+    -webkit-text-size-adjust: 100%;
+    scroll-padding-top: 0;
+  }
+
+  /* Background lives on <html> only: a body background would paint over the fixed backdrop layer. */
+  body {
+    @apply font-sans text-ink antialiased;
+    overflow-x: clip;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  ::selection {
+    background: rgb(var(--accent) / 0.35);
+    color: rgb(var(--ink));
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--accent-bright));
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+
+  /* Sections receive programmatic focus from navigation; don't draw a ring around a whole scene. */
+  section:focus-visible,
+  [tabindex="-1"]:focus-visible {
+    outline: none;
+  }
+}
+
+@layer components {
+  .backdrop-grid {
+    background-image: linear-gradient(rgb(var(--line) / 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(var(--line) / 0.035) 1px, transparent 1px);
+    background-size: 72px 72px;
+    mask-image: radial-gradient(ellipse 70% 60% at 60% 40%, black 20%, transparent 75%);
+  }
+
+  /* Floating labels tracking points in the 3D scene. */
+  .scene-label {
+    position: absolute;
+    left: 0;
+    top: 0;
+    white-space: nowrap;
+    padding: 0.3rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid rgb(var(--line) / 0.14);
+    background: rgb(var(--surface) / 0.55);
+    backdrop-filter: blur(8px);
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgb(var(--ink) / 0.85);
+    will-change: transform, opacity;
+    transition: border-color 0.3s, color 0.3s, box-shadow 0.3s, background-color 0.3s;
+  }
+  .scene-label--accent {
+    color: rgb(var(--accent-bright));
+    border-color: rgb(var(--accent) / 0.4);
+  }
+  .scene-label--muted {
+    color: rgb(var(--muted));
+  }
+  .scene-label.is-active {
+    color: rgb(var(--ink));
+    border-color: rgb(var(--accent) / 0.8);
+    background: rgb(var(--accent) / 0.2);
+    box-shadow: 0 0 24px rgb(var(--accent) / 0.45);
+  }
+
+  /* Hero orbit labels: plain text beside each domain body — no pill. */
+  .scene-label--orbit {
+    border-color: transparent;
+    background: transparent;
+    backdrop-filter: none;
+    padding: 0;
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    color: rgb(var(--ink) / 0.62);
+    text-shadow: 0 0 12px rgb(5 7 13 / 0.9);
+  }
+  /* Convergence channel markers: a technical annotation attached to each conduit. */
+  .scene-label--channel {
+    border-color: transparent;
+    background: transparent;
+    backdrop-filter: none;
+    padding: 0;
+    font-size: 9.5px;
+    letter-spacing: 0.26em;
+    color: rgb(var(--accent-bright) / 0.75);
+    text-shadow: 0 0 12px rgb(5 7 13 / 0.95);
+  }
+  .scene-label--skill {
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    padding: 0.2rem 0.5rem;
+    color: rgb(var(--ink) / 0.7);
+    background: rgb(var(--surface) / 0.4);
+  }
+
+  /* Compact screens: text panels sit over the 3D scene, so they get a quiet glass backing. */
+  @media (max-width: 1023px) {
+    .scene-panel {
+      border-radius: 1.5rem;
+      border: 1px solid rgb(var(--line) / 0.1);
+      background: rgb(var(--bg) / 0.72);
+      padding: 1.5rem 1.25rem;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+  }
+
+  /* 2D portrait (no-WebGL fallback): the cutout person, lit by a soft glow — no frame. */
+  .portrait-frame {
+    position: relative;
+    aspect-ratio: 598 / 920;
+  }
+  .portrait-frame__img {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 0 1px rgb(var(--accent-bright) / 0.5)) drop-shadow(0 0 24px rgb(var(--accent) / 0.25));
+    mask-image: linear-gradient(to bottom, black 78%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 78%, transparent 100%);
+  }
+  .portrait-frame__glow {
+    position: absolute;
+    inset: 5% -15% 10%;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at 50% 40%, rgb(var(--accent) / 0.22), transparent 65%);
+    filter: blur(10px);
+  }
+
+  /* Detail view: architecture rail and spatial header. */
+  .arch-rail__line {
+    left: 1.125rem;
+    right: 1.125rem;
+    top: 1.125rem;
+    height: 1px;
+    background: linear-gradient(90deg, rgb(var(--accent) / 0.2), rgb(var(--accent) / 0.8));
+  }
+  @media (max-width: 639px) {
+    .arch-rail::before {
+      content: "";
+      position: absolute;
+      left: 1.125rem;
+      top: 1rem;
+      bottom: 1rem;
+      width: 1px;
+      background: linear-gradient(rgb(var(--accent) / 0.2), rgb(var(--accent) / 0.8));
+    }
+  }
+  .dialog-stage {
+    background:
+      radial-gradient(ellipse 60% 90% at 85% 0%, rgb(var(--accent) / 0.18), transparent 70%),
+      linear-gradient(rgb(var(--line) / 0.04) 1px, transparent 1px) 0 0 / 32px 32px,
+      linear-gradient(90deg, rgb(var(--line) / 0.04) 1px, transparent 1px) 0 0 / 32px 32px;
+  }
+
+  /* Final scene: status of the next node. */
+  .node-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    border: 1px solid rgb(var(--accent-bright) / 0.7);
+    animation: node-wait 2.4s ease-in-out infinite;
+  }
+  .node-status-dot--open {
+    background: rgb(var(--accent-bright));
+    box-shadow: 0 0 10px rgb(var(--accent) / 0.9);
+    animation: none;
+  }
+
+  /* Resume download — pinned over the 3D resume module on desktop, inline elsewhere. */
+  .resume-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-align: left;
+    color: rgb(var(--muted));
+    transition: color 0.3s ease;
+  }
+  .resume-link__text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .resume-link__meta {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-family: theme("fontFamily.mono");
+    font-size: 9.5px;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: rgb(var(--accent-bright) / 0.8);
+  }
+  .resume-link__action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: theme("fontFamily.mono");
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgb(var(--ink) / 0.72);
+    transition: color 0.3s ease;
+  }
+  .resume-link__action svg {
+    transition: transform 0.3s ease;
+  }
+  .resume-link.is-active .resume-link__action {
+    color: rgb(var(--ink));
+  }
+  .resume-link.is-active .resume-link__action svg {
+    transform: translateX(3px);
+  }
+  .resume-link--pinned {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 20;
+    gap: 1rem;
+    opacity: 0;
+    visibility: hidden;
+    border-radius: 8px;
+  }
+  .resume-link__hit {
+    width: var(--hit-w, 5rem);
+    height: var(--hit-h, 6rem);
+    flex: none;
+    border-radius: 6px;
+  }
+  .resume-link--pinned:focus-visible {
+    outline-offset: 8px;
+  }
+  .resume-link--inline {
+    min-height: 44px;
+    margin-top: 1rem;
+    padding: 0.45rem 1.1rem 0.45rem 0.55rem;
+    border: 1px solid rgb(var(--line) / 0.14);
+    border-radius: 12px;
+    background: rgb(var(--surface) / 0.5);
+  }
+  .resume-link--inline.is-active {
+    border-color: rgb(var(--accent) / 0.55);
+  }
+  .resume-link__glyph {
+    display: grid;
+    place-items: center;
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 8px;
+    border: 1px solid rgb(var(--accent) / 0.35);
+    color: rgb(var(--accent-bright));
+    background: rgb(var(--accent) / 0.08);
+  }
+
+  .scroll-cue::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    width: 1px;
+    height: 40%;
+    background: rgb(var(--accent-bright));
+    animation: scroll-cue 2.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  }
+
+  .loader-ellipsis::after {
+    content: "";
+    animation: ellipsis 1.2s steps(4, end) infinite;
+  }
+
+  .fallback-core__orbits {
+    transform-origin: 200px 200px;
+    animation: orbit 60s linear infinite;
+  }
+
+  /* Dialog enter/exit (Radix exposes data-state). */
+  .dialog-overlay[data-state="open"] {
+    animation: fade-in 0.3s ease-out;
+  }
+  .dialog-overlay[data-state="closed"] {
+    animation: fade-out 0.2s ease-in;
+  }
+  .dialog-content[data-state="open"] {
+    animation: dialog-in 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .dialog-content[data-state="closed"] {
+    animation: fade-out 0.2s ease-in;
+  }
+
+  /* Custom cursor (desktop only — enabled from JS). */
+  .has-custom-cursor,
+  .has-custom-cursor * {
+    cursor: none !important;
+  }
+  .cursor-dot,
+  .cursor-ring {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 300;
+    pointer-events: none;
+    border-radius: 999px;
+    transition: opacity 0.3s;
+  }
+  .cursor-dot {
+    width: 6px;
+    height: 6px;
+    margin: -3px 0 0 -3px;
+    background: rgb(var(--ink));
+  }
+  .cursor-ring {
+    width: 34px;
+    height: 34px;
+    margin: -17px 0 0 -17px;
+    border: 1px solid rgb(var(--accent-bright) / 0.45);
+  }
+  .cursor-ring::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.35s, box-shadow 0.35s;
+    transform: scale(0.6);
+  }
+  .cursor-active .cursor-ring {
+    border-color: transparent;
+  }
+  .cursor-active .cursor-ring::after {
+    transform: scale(1.35);
+    background: rgb(var(--accent) / 0.14);
+    box-shadow: 0 0 24px rgb(var(--accent) / 0.45), inset 0 0 0 1px rgb(var(--accent-bright) / 0.6);
+  }
+  /* Pointer over a 3D object (the portrait): a soft, wider halo instead of the button state. */
+  .cursor-3d .cursor-ring {
+    border-color: rgb(var(--accent-bright) / 0.25);
+  }
+  .cursor-3d .cursor-ring::after {
+    transform: scale(1.9);
+    background: rgb(var(--accent) / 0.06);
+    box-shadow: 0 0 40px rgb(var(--accent) / 0.35);
+  }
+  .cursor-hidden .cursor-dot,
+  .cursor-hidden .cursor-ring {
+    opacity: 0;
+  }
+}
+
+@keyframes scroll-cue {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(250%); }
+}
+@keyframes node-wait {
+  50% { opacity: 0.25; }
+}
+@keyframes ellipsis {
+  0% { content: ""; }
+  25% { content: "."; }
+  50% { content: ".."; }
+  75% { content: "..."; }
+}
+@keyframes orbit {
+  to { transform: rotate(360deg); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+}
+@keyframes fade-out {
+  to { opacity: 0; }
+}
+@keyframes dialog-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+}
+@media (min-width: 640px) {
+  @keyframes dialog-in {
+    from { opacity: 0; transform: translateY(calc(-50% + 16px)) scale(0.98); }
+    to { opacity: 1; transform: translateY(-50%) scale(1); }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
