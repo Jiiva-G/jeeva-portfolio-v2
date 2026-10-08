@@ -1,6 +1,16 @@
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 
+# Security headers: the single source for jeevag.in (Cloudflare Pages applies this file; no zone-level header rules).
+# CSP sources are the ones the production page actually loads:
+#   fonts.googleapis.com / fonts.gstatic.com    Google Fonts (Geist, Geist Mono)
+#   static.cloudflareinsights.com               Cloudflare Web Analytics beacon, injected at the edge (reports to same-origin /cdn-cgi/rum)
+#   style-src-elem 'unsafe-inline'              Radix Dialog's scroll lock injects a <style> element with runtime values (inline style attributes stay disallowed)
+# HSTS has no includeSubDomains: not every subdomain is verified HTTPS-safe (www currently returns a Cloudflare 522).
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000
+  X-Frame-Options: DENY
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' https://fonts.googleapis.com; style-src-elem 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src https://fonts.gstatic.com; img-src 'self'; connect-src 'self'; worker-src 'none'; media-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
