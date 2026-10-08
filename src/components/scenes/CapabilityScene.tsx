@@ -35,7 +35,7 @@ export default function CapabilityScene() {
                   {cap.nodes.join(" · ")}
                 </p>
                 <p className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] text-muted">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted/70">Applied in</span>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted/85">Applied in</span>
                   {cap.appliedIn.map((id, k) => (
                     <span key={id} className="flex items-center gap-2">
                       {k > 0 && <span aria-hidden="true">·</span>}
@@ -45,7 +45,7 @@ export default function CapabilityScene() {
                           e.preventDefault();
                           scrollToScene(`system-${id}`);
                         }}
-                        className="text-ink/85 underline decoration-accent/40 underline-offset-4 transition-colors hover:text-ink hover:decoration-accent"
+                        className="relative text-ink/85 underline decoration-accent/40 underline-offset-4 transition-colors before:absolute before:-inset-x-1 before:-inset-y-1 before:content-[''] hover:text-ink hover:decoration-accent"
                       >
                         {systemsById.get(id)?.shortName}
                       </a>

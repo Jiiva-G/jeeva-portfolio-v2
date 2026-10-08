@@ -29,6 +29,7 @@ export default function ProjectModule({ system, onOpen }: { system: System; onOp
         onClick={(e) => onOpen(e.currentTarget)}
         className="mt-6 inline-flex min-h-[44px] items-center gap-2 text-[14px] font-medium text-ink"
         aria-haspopup="dialog"
+        aria-label={`Open system brief: ${system.name}`}
       >
         <span className="border-b border-accent/40 pb-0.5 transition-colors group-hover:border-accent">Open system brief</span>
         <ArrowUpRight size={16} className="text-accent-bright transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />

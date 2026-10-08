@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { sceneState, STAGE_COUNT } from "@/lib/sceneStore";
+import { SCENE_INVALIDATE, sceneState, STAGE_COUNT } from "@/lib/sceneStore";
 import type { SceneId } from "@/data/portfolio";
 
 /**
@@ -33,7 +33,12 @@ export function useSceneScroll() {
         }
       }
 
-      sceneState.stage = Math.min(Math.max(stage, 0), STAGE_COUNT - 1);
+      const next = Math.min(Math.max(stage, 0), STAGE_COUNT - 1);
+      if (next !== sceneState.stage) {
+        sceneState.stage = next;
+        // On-demand (reduced-motion) rendering may already have drawn this frame with the old stage.
+        window.dispatchEvent(new Event(SCENE_INVALIDATE));
+      }
       const max = document.documentElement.scrollHeight - window.innerHeight;
       // Exposed as a CSS variable so progress UI updates without React re-renders.
       document.documentElement.style.setProperty("--scroll-progress", String(max > 0 ? window.scrollY / max : 0));

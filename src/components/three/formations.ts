@@ -63,8 +63,16 @@ class Builder {
   push(x: number, y: number, z: number, color: RGB, brightness = 1) {
     if (this.full) return -1;
     const i = this.cursor++;
-    this.positions.set([x, y, z], i * 3);
-    this.colors.set([color[0] * brightness, color[1] * brightness, color[2] * brightness], i * 3);
+    // Direct writes: this runs ~20k times during start-up, so no temporary arrays.
+    const o = i * 3;
+    const p = this.positions;
+    const c = this.colors;
+    p[o] = x;
+    p[o + 1] = y;
+    p[o + 2] = z;
+    c[o] = color[0] * brightness;
+    c[o + 1] = color[1] * brightness;
+    c[o + 2] = color[2] * brightness;
     return i;
   }
 
@@ -481,10 +489,35 @@ function convergence(count: number): Formation {
   });
 }
 
-export function buildFormations(count: number): Formation[] {
+/** One builder per stage, in scroll order. Builders append to the shared per-particle metadata above, so they must run in this order after a reset. */
+const STAGE_BUILDERS = [heroField, capabilityCluster, ragPipeline, globe, navigation, waveform, constellation, timeline, convergence];
+
+function resetFormationMeta() {
   routeParam.length = 0;
   waveMeta.length = 0;
   flowMeta.length = 0;
   inflowMeta.length = 0;
-  return [heroField, capabilityCluster, ragPipeline, globe, navigation, waveform, constellation, timeline, convergence].map((make) => make(count));
+}
+
+/**
+ * Builds every stage's formation, one stage per task, so start-up never holds the main thread in a
+ * single long block (the loading screen's timers and progress keep running on slow CPUs).
+ * Returns a cancel function; `done` is not called after cancelling.
+ */
+export function buildFormationsIncrementally(count: number, done: (formations: Formation[]) => void): () => void {
+  let cancelled = false;
+  let timer = 0;
+  const out: Formation[] = [];
+  const step = () => {
+    if (cancelled) return;
+    if (out.length === 0) resetFormationMeta();
+    out.push(STAGE_BUILDERS[out.length](count));
+    if (out.length < STAGE_BUILDERS.length) timer = window.setTimeout(step, 0);
+    else done(out);
+  };
+  timer = window.setTimeout(step, 0);
+  return () => {
+    cancelled = true;
+    window.clearTimeout(timer);
+  };
 }

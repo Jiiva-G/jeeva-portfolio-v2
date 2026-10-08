@@ -164,15 +164,27 @@ export default function ResumeModule() {
       minY = Math.min(minY, y);
       maxY = Math.max(maxY, y);
     });
-    const shown = vis > 0.02 && !behind && maxX > 0 && minX < size.width && maxY > 0 && minY < size.height;
-    const visibility = shown ? "visible" : "hidden";
-    if (el.style.visibility !== visibility) el.style.visibility = visibility;
-    if (!shown) return;
+    // While focused it is fully opaque, so it only follows the module once the module has arrived;
+    // until then it stays on its fixed fallback tile instead of sweeping across the heading.
+    const focused = el === document.activeElement;
+    const shown = vis > (focused ? 0.95 : 0.02) && !behind && maxX > 0 && minX < size.width && maxY > 0 && minY < size.height;
+    // Never hide the link with `visibility`/`display`: it must stay in the accessibility tree and the
+    // tab order. Unplaced, CSS keeps it transparent and click-through (or shows it in place on focus).
+    if (!shown) {
+      if (el.hasAttribute("data-placed")) {
+        el.removeAttribute("data-placed");
+        el.style.removeProperty("transform");
+        el.style.removeProperty("opacity");
+      }
+      return;
+    }
+    if (!el.hasAttribute("data-placed")) el.setAttribute("data-placed", "");
     const transform = `translate3d(${minX.toFixed(1)}px, ${minY.toFixed(1)}px, 0)`;
     if (el.style.transform !== transform) el.style.transform = transform;
     el.style.setProperty("--hit-w", `${(maxX - minX).toFixed(1)}px`);
     el.style.setProperty("--hit-h", `${(maxY - minY).toFixed(1)}px`);
-    const opacity = vis.toFixed(2);
+    // A focused link is always fully visible, even while the module is still fading in.
+    const opacity = focused ? "1" : vis.toFixed(2);
     if (el.style.opacity !== opacity) el.style.opacity = opacity;
   }
 

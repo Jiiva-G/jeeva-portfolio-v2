@@ -236,6 +236,8 @@
   .resume-link.is-active .resume-link__action svg {
     transform: translateX(3px);
   }
+  /* Transparent and click-through until the 3D module places it (it sets data-placed + opacity),
+     but always in the accessibility tree and tab order. */
   .resume-link--pinned {
     position: fixed;
     left: 0;
@@ -243,8 +245,28 @@
     z-index: 20;
     gap: 1rem;
     opacity: 0;
-    visibility: hidden;
+    pointer-events: none;
     border-radius: 8px;
+  }
+  .resume-link--pinned[data-placed] {
+    pointer-events: auto;
+  }
+  /* Focused before it has been placed: show it as a plain tile at the upper right (near where the
+     module lands, clear of the heading and CTA) until it is. */
+  .resume-link--pinned:not([data-placed]):focus-visible {
+    top: 5.5rem;
+    right: 2rem;
+    left: auto;
+    transform: none;
+    opacity: 1;
+    pointer-events: auto;
+    padding: 0.6rem 1.1rem;
+    border: 1px solid rgb(var(--accent) / 0.55);
+    border-radius: 12px;
+    background: rgb(var(--surface) / 0.92);
+  }
+  .resume-link--pinned:not([data-placed]) .resume-link__hit {
+    display: none;
   }
   .resume-link__hit {
     width: var(--hit-w, 5rem);

@@ -13,7 +13,7 @@ const SCENE = 7;
 const VIEW_FROM = new THREE.Vector3(-13.6, 2.8, -0.4);
 
 /** Career as a path receding into depth: the oldest milestone is furthest away. */
-export default function Timeline3D() {
+export default function Timeline3D({ compact }: { compact: boolean }) {
   const pathLine = useMemo(() => {
     const geo = new THREE.BufferGeometry().setFromPoints(timelinePath().pts.map((p) => new THREE.Vector3(...p)));
     return new THREE.Line(geo, new THREE.LineBasicMaterial({ color: "#4d8dff", transparent: true, opacity: 0.45 }));
@@ -75,26 +75,31 @@ export default function Timeline3D() {
               blending={THREE.AdditiveBlending}
             />
           </sprite>
-          {/* Glass plate carrying the label, connected to the path by a short stem. */}
-          <group position={add(n.pos, [0, 0.95, 0])} rotation={rotations[i]}>
-            <mesh>
-              <planeGeometry args={[1.75, 0.5]} />
-              <meshStandardMaterial color="#0d1730" metalness={0.3} roughness={0.25} transparent opacity={0.4} side={THREE.DoubleSide} />
-            </mesh>
-            <lineLoop geometry={plateEdge} position={[0, 0, 0.01]}>
-              <lineBasicMaterial
-                ref={(m) => {
-                  edgeMats.current[i] = m;
-                }}
-                color={n.latest ? "#7cb6ff" : "#5e7fb8"}
-                transparent
-              />
-            </lineLoop>
-          </group>
-          <mesh position={add(n.pos, [0, 0.33, 0])}>
-            <cylinderGeometry args={[0.008, 0.008, 0.66, 6]} />
-            <meshBasicMaterial color="#4d8dff" transparent opacity={0.6} />
-          </mesh>
+          {/* Glass plate carrying the label, connected to the path by a short stem. Compact layouts
+              hide the floating labels, so they get neither (no empty plates). */}
+          {!compact && (
+            <>
+              <group position={add(n.pos, [0, 0.95, 0])} rotation={rotations[i]}>
+                <mesh>
+                  <planeGeometry args={[1.75, 0.5]} />
+                  <meshStandardMaterial color="#0d1730" metalness={0.3} roughness={0.25} transparent opacity={0.4} side={THREE.DoubleSide} />
+                </mesh>
+                <lineLoop geometry={plateEdge} position={[0, 0, 0.01]}>
+                  <lineBasicMaterial
+                    ref={(m) => {
+                      edgeMats.current[i] = m;
+                    }}
+                    color={n.latest ? "#7cb6ff" : "#5e7fb8"}
+                    transparent
+                  />
+                </lineLoop>
+              </group>
+              <mesh position={add(n.pos, [0, 0.33, 0])}>
+                <cylinderGeometry args={[0.008, 0.008, 0.66, 6]} />
+                <meshBasicMaterial color="#4d8dff" transparent opacity={0.6} />
+              </mesh>
+            </>
+          )}
           <LabelAnchor id={n.id} position={add(n.pos, [0, 0.95, 0])} visibility={() => vis.current * (0.35 + 0.65 * acts.current[i])} />
         </group>
       ))}

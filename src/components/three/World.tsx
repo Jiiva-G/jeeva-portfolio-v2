@@ -291,7 +291,7 @@ export default function World({ formations, reduced, lowPower, compact, cutoutUr
       <GeoScene lowPower={lowPower} />
       <NavScene lowPower={lowPower} />
       <AudioScene />
-      <Timeline3D />
+      <Timeline3D compact={compact} />
       <ConvergenceScene lowPower={lowPower} />
       {/* Secondary output of the core; compact layouts use the inline resume link instead. */}
       {!compact && <ResumeModule />}

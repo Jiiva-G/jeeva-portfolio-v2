@@ -24,7 +24,7 @@ export default function ExperienceScene() {
               {role.company} <span className="font-normal text-muted">· {role.title}</span>
             </h3>
             <p className="mt-1.5 text-[14px] leading-relaxed text-muted">{role.summary}</p>
-            <p className="mt-1 text-[12px] text-muted/70">{role.location}</p>
+            <p className="mt-1 text-[12px] text-muted/85">{role.location}</p>
           </Reveal>
         ))}
       </ol>

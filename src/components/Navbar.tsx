@@ -70,6 +70,18 @@ export default function Navbar({ active }: { active: SceneId }) {
               </li>
             );
           })}
+          {/* Quiet direct download; the 3D resume module in Connect stays the in-scene treatment. */}
+          <li className="ml-1 flex items-center border-l border-line pl-1">
+            <a
+              href={profile.resume.href}
+              download={profile.resume.fileName}
+              type="application/pdf"
+              aria-label="Resume — download PDF"
+              className="rounded-full px-4 py-2 text-[13px] text-muted transition-colors duration-300 hover:text-ink"
+            >
+              Resume
+            </a>
+          </li>
         </ul>
 
         <div className="flex items-center gap-2 md:hidden">
@@ -111,6 +123,19 @@ export default function Navbar({ active }: { active: SceneId }) {
                 </button>
               </li>
             ))}
+            <li className="mt-1 border-t border-line pt-1">
+              <a
+                href={profile.resume.href}
+                download={profile.resume.fileName}
+                type="application/pdf"
+                aria-label="Resume — download PDF"
+                onClick={() => setOpen(false)}
+                className="flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[15px] text-muted"
+              >
+                Resume
+                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">PDF</span>
+              </a>
+            </li>
           </ul>
         )}
       </nav>

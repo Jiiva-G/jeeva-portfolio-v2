@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
-import { buildFormations } from "./formations";
+import { buildFormationsIncrementally, type Formation } from "./formations";
 import { LabelContext, OBJECT_LABELS } from "./labelDefs";
 import World from "./World";
 
@@ -20,14 +20,18 @@ const toneClass = { accent: "scene-label--accent", muted: "scene-label--muted", 
 /** The fixed, full-screen 3D world. Loaded lazily so three.js never blocks first paint. */
 export default function Experience3D({ compact, reduced, lowPower, interactive, cutoutUrl, onReady, onContextLost }: Props) {
   const count = lowPower ? 1000 : 2400;
-  const formations = useMemo(() => buildFormations(count), [count]);
-  const labels = useMemo(() => [...formations.flatMap((f) => f.labels), ...OBJECT_LABELS], [formations]);
+  // Built in small tasks before the canvas mounts, so start-up never blocks the main thread in one go.
+  const [formations, setFormations] = useState<Formation[] | null>(null);
+  useEffect(() => buildFormationsIncrementally(count, setFormations), [count]);
+  const labels = useMemo(() => (formations ? [...formations.flatMap((f) => f.labels), ...OBJECT_LABELS] : []), [formations]);
   const labelEls = useRef(new Map<string, HTMLElement>());
 
   const registerLabel = useCallback((id: string, el: HTMLElement | null) => {
     if (el) labelEls.current.set(id, el);
     else labelEls.current.delete(id);
   }, []);
+
+  if (!formations) return null;
 
   return (
     <>

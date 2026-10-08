@@ -36,9 +36,9 @@ export default function ContactScene({ has3D }: { has3D: boolean }) {
       resumeLink.el = null;
       sceneState.resume = false;
       // Drop the position the 3D module wrote, in case the layout switches to inline.
+      el?.removeAttribute("data-placed");
       el?.style.removeProperty("transform");
       el?.style.removeProperty("opacity");
-      el?.style.removeProperty("visibility");
     };
   }, [pinned]);
 
@@ -141,7 +141,15 @@ export default function ContactScene({ has3D }: { has3D: boolean }) {
             className={cn("resume-link", pinned ? "resume-link--pinned" : "resume-link--inline", resumeOn && "is-active")}
             onPointerEnter={() => setResumeActive(true)}
             onPointerLeave={() => setResumeActive(false)}
-            onFocus={() => setResumeActive(true)}
+            onFocus={(e) => {
+              setResumeActive(true);
+              // Focused before the 3D module has placed it (e.g. tabbing in while the camera is still
+              // travelling): bring the scene into view, as the browser would for an in-flow element.
+              if (pinned && !e.currentTarget.hasAttribute("data-placed")) {
+                const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+                document.getElementById("contact")?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+              }
+            }}
             onBlur={() => setResumeActive(false)}
             onKeyDown={(e) => {
               // Links only activate on Enter natively; Space downloads too.
@@ -181,7 +189,7 @@ export default function ContactScene({ has3D }: { has3D: boolean }) {
             {copied ? "Email address copied to clipboard" : ""}
           </span>
 
-          <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.3em] text-muted/70 [@media(max-height:780px)]:hidden">
+          <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.3em] text-muted/85 [@media(max-height:780px)]:hidden">
             {profile.name} · {profile.title}
           </p>
         </Reveal>

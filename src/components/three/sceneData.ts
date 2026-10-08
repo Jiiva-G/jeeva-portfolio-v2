@@ -114,7 +114,7 @@ export const AUDIO = {
 
 // ── Timeline — time runs toward the viewer ──────────────────────────────────
 export const TIMELINE: { id: string; text: string; pos: Vec3; latest?: boolean }[] = [
-  { id: "tl-bsc", text: "B.Sc. · 2019–2022", pos: [-2.0, -1.2, -7.2] },
+  { id: "tl-bsc", text: "B.Sc. · 2019–2022", pos: [-2.0, -1.2, -6.85] },
   { id: "tl-msc", text: "M.Sc. AI & ML · 2023–2025", pos: [-0.8, -0.55, -4.6] },
   { id: "tl-aboss", text: "ABOSS · Aug 2025", pos: [0.4, 0.1, -2.1] },
   { id: "tl-neorains", text: "NeoRains · Jan 2026 → now", pos: [1.6, 0.75, 0.5], latest: true },
