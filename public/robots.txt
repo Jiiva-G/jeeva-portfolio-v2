@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://jeeva-webfolio.netlify.app/sitemap.xml
+Sitemap: https://jeevag.in/sitemap.xml
