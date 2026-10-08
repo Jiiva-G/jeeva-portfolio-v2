@@ -75,10 +75,10 @@ export default function HeroScene({ started, has3D }: { started: boolean; has3D:
         {...(started ? { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { delay: 1.3, duration: 1 } } : { initial: { opacity: 0 } })}
         type="button"
         onClick={() => scrollToScene("capabilities")}
+        aria-label="Go to capabilities"
         className="mt-14 hidden items-center gap-3 font-mono text-[10px] uppercase tracking-[0.28em] text-muted transition-colors hover:text-ink lg:inline-flex"
       >
         <span className="scroll-cue relative flex h-9 w-[1px] overflow-hidden bg-line" aria-hidden="true" />
-        Scroll to travel through the system
         <ArrowDown size={12} aria-hidden="true" />
       </motion.button>
     </SceneBlock>

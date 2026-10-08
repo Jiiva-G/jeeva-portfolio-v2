@@ -15,7 +15,7 @@ type Props = {
   onContextLost: () => void;
 };
 
-const toneClass = { accent: "scene-label--accent", muted: "scene-label--muted", skill: "scene-label--skill", orbit: "scene-label--orbit", channel: "scene-label--channel" } as const;
+const toneClass = { accent: "scene-label--accent", muted: "scene-label--muted", skill: "scene-label--skill", orbit: "scene-label--orbit" } as const;
 
 /** The fixed, full-screen 3D world. Loaded lazily so three.js never blocks first paint. */
 export default function Experience3D({ compact, reduced, lowPower, interactive, cutoutUrl, onReady, onContextLost }: Props) {

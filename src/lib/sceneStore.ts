@@ -8,20 +8,22 @@ export const sceneState = {
   /** Pointer position normalised to [-1, 1]. */
   pointerX: 0,
   pointerY: 0,
-  /** Final scene: the primary CTA is hovered/focused, so the next node comes online. */
+  /** Final scene: "Get in touch" is hovered/focused, so the orbital system comes online. */
   connect: false,
-  /** Primary CTA centre in normalised device coordinates — where the node's beam aims. */
+  /** "Get in touch" centre in normalised device coordinates — where the light pulse starts. */
   ctaX: -0.4,
   ctaY: -0.3,
-  /** Final scene: the resume download link is hovered/focused, so the resume module activates. */
-  resume: false,
+  /** Final scene: index of the orbital node link that is hovered/focused, or -1. */
+  orbitFocus: -1,
+  /** Compact final scene: where the core should sit, as a fraction of the viewport height from the section's centre. */
+  orbitCoreOffset: 0,
 };
 
 /**
- * The resume download link. On desktop 3D layouts the resume module pins it over its own
- * screen position every frame; everywhere else it stays in the normal document flow.
+ * The orbital node links (ORBITAL.nodes order). On desktop 3D layouts the orbital system pins each
+ * one over its node every frame; elsewhere they are not rendered and plain links are used instead.
  */
-export const resumeLink: { el: HTMLElement | null } = { el: null };
+export const orbitNodeLinks: { els: (HTMLElement | null)[] } = { els: [] };
 
 /** Fired when DOM state the 3D scene reads changes; on-demand (reduced-motion) rendering redraws on it. */
 export const SCENE_INVALIDATE = "scene:invalidate";

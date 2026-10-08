@@ -3,9 +3,10 @@
 // blends between neighbouring formations as the visitor scrolls.
 
 import { capabilities, skillGroups } from "@/data/portfolio";
-import { AUDIO, CONVERGENCE, convergencePoint, GEO, HERO_ORBITS, heroOrbitPoint, NAV, RAG_STEPS, TIMELINE, type Vec3 } from "./sceneData";
+import { frame } from "./frameState";
+import { AUDIO, GEO, HERO_ORBITS, heroOrbitPoint, NAV, ORBITAL, orbitPoint, STOBAY_STAGES, TIMELINE, type Vec3 } from "./sceneData";
 
-export type LabelTone = "accent" | "muted" | "skill" | "orbit" | "channel";
+export type LabelTone = "accent" | "muted" | "skill" | "orbit";
 
 export type SceneLabel = { id: string; text: string; position: Vec3; tone?: LabelTone; group?: string };
 
@@ -204,26 +205,24 @@ function capabilityCluster(count: number): Formation {
   return b.build({ spin: 0, labels, links });
 }
 
-// ── 2 · stobay.ai — RAG pipeline particles (meshes carry the stages) ────────
-function ragPipeline(count: number): Formation {
+// ── 2 · stobay.ai — capability flow particles (meshes carry the stages) ─────
+// Public-safe: knowledge → retrieval → reasoning → response, with no internal architecture.
+function stobaySystem(count: number): Formation {
   const b = new Builder(count, 3);
-  const P = (i: number) => RAG_STEPS[i].pos;
-  for (let i = 0; i < RAG_STEPS.length - 1; i++) b.stream(P(i), P(i + 1), b.share(0.012), 0.45, 0.025);
-  b.ball(P(2)[0], P(2)[1], P(2)[2], 0.5, b.share(0.03), WHITE, 0.55);
-  // Embeddings: a few semantic clusters.
-  for (let c = 0; c < 4; c++) {
-    b.ball(P(3)[0] + (b.rand() - 0.5) * 0.7, P(3)[1] + (b.rand() - 0.5) * 0.8, P(3)[2] + (b.rand() - 0.5) * 0.6, 0.22, b.share(0.018), null, 0.9);
+  const P = (i: number) => STOBAY_STAGES[i].pos;
+  for (let i = 0; i < STOBAY_STAGES.length - 1; i++) b.stream(P(i), P(i + 1), b.share(0.025), 0.45, 0.03);
+  // A faint haze of knowledge around the source material.
+  b.ball(P(0)[0], P(0)[1], P(0)[2], 0.8, b.share(0.04), WHITE, 0.5);
+  // A soft spherical field around the retrieval lens.
+  const field = b.share(0.12);
+  for (let k = 0; k < field; k++) {
+    const p = fibonacciSphere(k, field, 0.9 + b.rand() * 0.25);
+    b.push(P(1)[0] + p[0], P(1)[1] + p[1], P(1)[2] + p[2], k % 6 === 0 ? BRIGHT : b.tone(0.5), 0.7);
   }
-  // Vector DB volume.
-  const db = b.share(0.1);
-  for (let k = 0; k < db; k++) {
-    const a = b.rand() * Math.PI * 2;
-    const r = 0.42 * Math.sqrt(b.rand());
-    b.push(P(4)[0] + Math.cos(a) * r, P(4)[1] + (b.rand() - 0.5) * 1.05, P(4)[2] + Math.sin(a) * r, k % 5 === 0 ? BRIGHT : b.tone(0.5), 0.85);
-  }
-  // Retrieval: nearest vectors pulled toward the context.
-  b.stream(P(4), P(6), b.share(0.04), 0.95, 0.06);
-  b.ball(P(7)[0], P(7)[1], P(7)[2], 0.35, b.share(0.025), BRIGHT, 0.75);
+  // What was found flows on into reasoning, then out as the answer.
+  b.stream(P(1), P(2), b.share(0.06), 0.95, 0.06);
+  b.ball(P(2)[0], P(2)[1], P(2)[2], 0.35, b.share(0.04), BRIGHT, 0.75);
+  b.ball(P(3)[0], P(3)[1], P(3)[2], 0.3, b.share(0.02), WHITE, 0.6);
   return b.build({ spin: 0, labels: [], links: [] });
 }
 
@@ -449,27 +448,41 @@ function timeline(count: number): Formation {
   });
 }
 
-// ── 8 · System convergence — every scene's particles streaming into one core ─
-const inflowMeta: { ch: number; s: number; j: Vec3 }[] = [];
-const inflowTmp: Vec3 = [0, 0, 0];
+// ── 8 · Orbital system — trails on the rings around the core ────────────────
+const trailMeta: { ring: number; a: number; r: number; lift: number }[] = [];
+const trailTmp: Vec3 = [0, 0, 0];
 
-function convergence(count: number): Formation {
+function orbitalField(count: number): Formation {
   const b = new Builder(count, 9);
-  const per = b.share(0.04);
-  CONVERGENCE.channels.forEach((_, ch) => {
-    for (let k = 0; k < per; k++) {
-      const i = b.push(0, 0, 0, k % 5 === 0 ? BRIGHT : BLUE, 0.6);
-      if (i >= 0) inflowMeta[i] = { ch, s: k / per, j: [b.gauss() * 0.12, b.gauss() * 0.12, b.gauss() * 0.12] };
+  // Travelling trails: a few short comet-like arcs per ring, brightest at the head.
+  ORBITAL.rings.forEach((ring, ri) => {
+    for (let trail = 0; trail < 2; trail++) {
+      const head = b.rand() * Math.PI * 2;
+      const len = b.share(0.018);
+      for (let k = 0; k < len; k++) {
+        const u = k / len;
+        const i = b.push(0, 0, 0, u < 0.12 ? BRIGHT : BLUE, 0.95 - u * 0.7);
+        const dir = Math.sign(ring.speed) || 1;
+        if (i >= 0) trailMeta[i] = { ring: ri, a: head - dir * u * 0.9, r: ring.radius + b.gauss() * 0.025, lift: b.gauss() * 0.02 };
+      }
+    }
+    // Faint dust that gives each ring a particulate texture.
+    const dust = b.share(0.035);
+    for (let k = 0; k < dust; k++) {
+      const p = orbitPoint(ring, b.rand() * Math.PI * 2, trailTmp, ring.radius + b.gauss() * 0.05);
+      b.push(p[0], p[1] + b.gauss() * 0.03, p[2], b.tone(0.6), 0.32);
     }
   });
-  // A calm, settled field around the core.
-  const field = b.share(0.07);
+  // A light shimmer close to the core.
+  b.ball(0, 0, 0, 0.9, b.share(0.025), WHITE, 0.35);
+  // A calm, sparse field around the system.
+  const field = b.share(0.06);
   for (let placed = 0; placed < field; ) {
-    const x = (b.rand() * 2 - 1) * 8;
-    const y = -2.5 + b.rand() * 7;
-    const z = -7 + b.rand() * 10;
-    if (Math.hypot(x, y - CONVERGENCE.coreY, z) < 2.4) continue;
-    b.push(x, y, z, b.tone(0.3), 0.25);
+    const x = (b.rand() * 2 - 1) * 9;
+    const y = -3.5 + b.rand() * 7;
+    const z = -8 + b.rand() * 10;
+    if (Math.hypot(x, y, z) < 4.6) continue;
+    b.push(x, y, z, b.tone(0.3), 0.22);
     placed++;
   }
   return b.build({
@@ -477,26 +490,28 @@ function convergence(count: number): Formation {
     labels: [],
     links: [],
     animate: (i, t, out) => {
-      const m = inflowMeta[i];
+      const m = trailMeta[i];
       if (!m) return;
-      const u = (m.s + t * 0.045) % 1;
-      const p = convergencePoint(CONVERGENCE.channels[m.ch], u, inflowTmp);
-      const spread = 1 - u; // streams tighten as they reach the core
-      out[0] += p[0] + m.j[0] * spread;
-      out[1] += p[1] + m.j[1] * spread;
-      out[2] += p[2] + m.j[2] * spread;
+      const ring = ORBITAL.rings[m.ring];
+      // A focused node's ring opens slightly; the "Get in touch" wave ripples outward through the rings.
+      const focus = frame.orbitFocusRing === m.ring ? frame.orbitFocusAmt * 0.12 : 0;
+      const wave = frame.orbitWave >= 0 ? Math.exp(-((m.r - frame.orbitWave) ** 2) * 3) * 0.18 : 0;
+      const p = orbitPoint(ring, m.a + t * ring.speed, trailTmp, m.r + focus + wave);
+      out[0] += p[0];
+      out[1] += p[1] + m.lift;
+      out[2] += p[2];
     },
   });
 }
 
 /** One builder per stage, in scroll order. Builders append to the shared per-particle metadata above, so they must run in this order after a reset. */
-const STAGE_BUILDERS = [heroField, capabilityCluster, ragPipeline, globe, navigation, waveform, constellation, timeline, convergence];
+const STAGE_BUILDERS = [heroField, capabilityCluster, stobaySystem, globe, navigation, waveform, constellation, timeline, orbitalField];
 
 function resetFormationMeta() {
   routeParam.length = 0;
   waveMeta.length = 0;
   flowMeta.length = 0;
-  inflowMeta.length = 0;
+  trailMeta.length = 0;
 }
 
 /**

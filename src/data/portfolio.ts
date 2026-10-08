@@ -119,7 +119,7 @@ export const systems: System[] = [
     name: "stobay.ai",
     shortName: "stobay.ai",
     kicker: "Enterprise document intelligence",
-    summary: "Grounding LLMs in business documents — retrieval, embeddings, orchestration and channel integrations.",
+    summary: "Turning business knowledge into grounded AI experiences across connected workflows.",
     description: "Enterprise AI platform for document-based knowledge and intelligent business conversations.",
     context:
       "stobay.ai is an enterprise AI chatbot platform that powers document-based Q&A for businesses, reachable from the channels teams and customers already use.",
@@ -131,7 +131,8 @@ export const systems: System[] = [
       "Implemented web scraping infrastructure with Firecrawl, Bright Data and custom extraction agents to keep knowledge sources enriched.",
       "Designed multi-agent workflows with CrewAI and LangChain for research, summarisation and lead-generation pipelines.",
     ],
-    architecture: ["User query", "Agent", "Retrieval", "Vector search", "Context", "LLM", "Response"],
+    // Public-safe capability flow, not the internal architecture.
+    architecture: ["Business knowledge", "Intelligent retrieval", "Contextual reasoning", "AI response"],
     stack: ["RAG", "Vector Databases", "Semantic Retrieval", "LLM Orchestration", "Multi-Agent Workflows", "Enterprise Integrations", "Web Scraping", "Automation"],
     role: "Core contributor · NeoRains",
     stage: 2,

@@ -25,8 +25,8 @@ const KEYS: Key[] = [
   { stage: 5.8, scene: 6, pos: [-3, 1.6, 10.8], target: [0, 0, 0], ease: "move" },
   { stage: 6.3, scene: 6, pos: [2.2, 0.6, 10.4], target: [0, 0, 0], ease: "pan" },
   { stage: 7, scene: 7, pos: [-13.6, 2.8, -0.4], target: [0, -0.1, -3.1], ease: "move" },
-  // Final scene: centred and slightly elevated, with depth on every side of the core.
-  { stage: 8, scene: 8, pos: [0, 5.8, 14.6], target: [0, 0.2, 0], ease: "move" },
+  // Final scene: a slightly elevated view, so the orbits read as ellipses around the core.
+  { stage: 8, scene: 8, pos: [0, 5.36, 11.1], target: [0, 0, 0], ease: "move" },
 ];
 
 const posCurve = new THREE.CatmullRomCurve3(
@@ -69,4 +69,4 @@ export function journeyPoints(samples: number) {
  * Horizontal off-axis shift per stage (fraction of viewport width) so each subject sits
  * beside its text panel. Negative = subject appears on the right.
  */
-export const VIEW_SHIFT = [-0.2, -0.18, -0.2, 0.21, -0.2, 0.2, -0.2, -0.2, 0];
+export const VIEW_SHIFT = [-0.2, -0.18, -0.2, 0.21, -0.2, 0.2, -0.2, -0.2, -0.145];

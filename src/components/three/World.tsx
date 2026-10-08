@@ -13,11 +13,10 @@ import CapabilityHub from "./objects/CapabilityHub";
 import GeoScene from "./objects/GeoScene";
 import HeroSystem from "./objects/HeroSystem";
 import NavScene from "./objects/NavScene";
-import ConvergenceScene from "./objects/ConvergenceScene";
-import RagPipeline from "./objects/RagPipeline";
-import ResumeModule from "./objects/ResumeModule";
+import OrbitalSystem from "./objects/OrbitalSystem";
+import StobaySystem from "./objects/StobaySystem";
 import Timeline3D from "./objects/Timeline3D";
-import { add, CENTERS, CONVERGENCE } from "./sceneData";
+import { add, CENTERS } from "./sceneData";
 import { createDotTexture } from "./textures";
 
 type Props = {
@@ -133,18 +132,16 @@ export default function World({ formations, reduced, lowPower, compact, cutoutUr
     sampleCamera(r.stage, camPos, camTarget);
     const aspect = size.width / Math.max(size.height, 1);
     const fitAll = Math.min(Math.max(0.78 / aspect, 1), 1.75);
-    // The portrait scenes stay close on narrow screens: the ring may crop, the face must not shrink.
-    // Final scene: the convergence core is centred above the closing text on every screen size.
+    // The portrait scene stays close on narrow screens: the ring may crop, the face must not shrink.
+    const closeUp = presence(r.stage, 0);
+    let fit = fitAll + (Math.min(fitAll, 1.22) - fitAll) * closeUp;
+    // Final scene — the orbital system. Compact screens recompose it around the second orbit (the
+    // outer one may run off the edges); short desktop screens (e.g. 1280×720) pull back so the
+    // upper nodes clear the nav.
     const finalScene = presence(r.stage, 8);
-    // The hero and the final core stay close on narrow screens; conduits may run off-screen, the core must not fade into fog.
-    const closeUp = Math.max(presence(r.stage, 0), finalScene);
-    const fit = fitAll + (Math.min(fitAll, finalScene > presence(r.stage, 0) ? 1.15 : 1.22) - fitAll) * closeUp;
-    // Short desktop screens (e.g. 1280×720): pull back further at the final stage so the core
-    // keeps clear space above the closing text without being pushed up under the nav.
-    const shortScreen = compact ? 0 : Math.min(Math.max((860 - size.height) / 140, 0), 1) * finalScene;
-    // Desktop final stage sits a little further back so the whole core and all six channels stay below the nav.
-    const finalPullBack = compact ? 1 : 1 + 0.14 * finalScene;
-    camPos.sub(camTarget).multiplyScalar(fit * finalPullBack * (1 + 0.45 * shortScreen)).add(camTarget);
+    const finalFit = compact ? Math.min(Math.max(0.85 / aspect, 1), 1.6) : 1 + 0.21 * Math.min(Math.max((860 - size.height) / 140, 0), 1);
+    fit += (finalFit - fit) * finalScene;
+    camPos.sub(camTarget).multiplyScalar(fit).add(camTarget);
     const parallax = reduced || compact ? 0 : 1;
     r.camX += (sceneState.pointerX * 0.5 * parallax - r.camX) * (1 - Math.exp(-dt * 2.5));
     r.camY += (-sceneState.pointerY * 0.3 * parallax - r.camY) * (1 - Math.exp(-dt * 2.5));
@@ -157,7 +154,9 @@ export default function World({ formations, reduced, lowPower, compact, cutoutUr
     const mix = smoothstep(0.18, 0.82, r.stage - from);
     const shiftX = compact ? 0 : VIEW_SHIFT[from] + (VIEW_SHIFT[to] - VIEW_SHIFT[from]) * mix;
     const baseShiftY = compact ? 0.17 : 0;
-    const shiftY = baseShiftY + ((compact ? 0.3 : 0.21) - baseShiftY) * finalScene + 0.085 * shortScreen;
+    // Final scene: beside the text on desktop; on compact screens it sits in the gap the layout
+    // reserves between the invitation and the actions (measured by ContactScene).
+    const shiftY = baseShiftY + ((compact ? -sceneState.orbitCoreOffset : 0) - baseShiftY) * finalScene;
     const cam = camera as THREE.PerspectiveCamera;
     cam.setViewOffset(size.width, size.height, shiftX * size.width, shiftY * size.height, size.width, size.height);
     cam.updateMatrixWorld();
@@ -177,9 +176,6 @@ export default function World({ formations, reduced, lowPower, compact, cutoutUr
     const sB = Math.sin(B.spin * time);
     const drift = reduced ? 0 : 0.02;
     const swirl = Math.sin(mix * Math.PI);
-    const toConvergence = from === 7 && to === 8;
-    // Streams read through the depth fog during that one transition.
-    pointsMat.size = (lowPower ? 0.075 : 0.06) * (toConvergence ? 1 + 0.7 * swirl : 1);
 
     for (let i = 0; i < count; i++) {
       const j = i * 3;
@@ -197,38 +193,6 @@ export default function World({ formations, reduced, lowPower, compact, cutoutUr
       const bx = tmpB[0] * cB - tmpB[2] * sB + cb[0];
       const by = tmpB[1] + cb[1];
       const bz = tmpB[0] * sB + tmpB[2] * cB + cb[2];
-      if (toConvergence) {
-        // Experience → Connect: every particle detaches from the timeline and routes through one of
-        // the six channel entrances, so mid-transition the field reads as six forming streams.
-        const ch = CONVERGENCE.channels[i % 6].from;
-        const jx = (((i * 7919) % 97) / 97 - 0.5) * 0.9;
-        const jy = (((i * 104729) % 89) / 89 - 0.5) * 0.9;
-        // Bundles form part-way along the journey (in front of the travelling camera), each
-        // already offset in its channel's direction, then flow forward into the channels.
-        const cx = cb[0] + (ca[0] - cb[0]) * 0.45 + ch[0] * 0.95 + jx;
-        const cy = cb[1] + (ca[1] - cb[1]) * 0.45 + ch[1] * 0.95 + jy;
-        const cz = cb[2] + (ca[2] - cb[2]) * 0.45 + ch[2] * 0.95 + jx * 0.5;
-        // Two legs — timeline → bundle point → channel — staggered per particle, so mid-way the
-        // field is six tight funnels streaming forward rather than a diffuse cloud.
-        const stagger = ((i * 31) % 100) / 100;
-        const m = Math.min(Math.max(mix * 1.4 - stagger * 0.4, 0), 1);
-        let px: number, py: number, pz: number;
-        if (m < 0.5) {
-          const k = smoothstep(0, 1, m / 0.5);
-          px = ax + (cx - ax) * k;
-          py = ay + (cy - ay) * k;
-          pz = az + (cz - az) * k;
-        } else {
-          const k = smoothstep(0, 1, (m - 0.5) / 0.5);
-          px = cx + (bx - cx) * k;
-          py = cy + (by - cy) * k;
-          pz = cz + (bz - cz) * k;
-        }
-        pos[j] = px + Math.sin(time * 0.5 + i * 1.7) * drift;
-        pos[j + 1] = py + Math.cos(time * 0.4 + i * 1.3) * drift;
-        pos[j + 2] = pz;
-        continue;
-      }
       // Particles stream along a spiral while travelling between scenes.
       const ang = i * 2.399 + mix * 3;
       const radius = swirl * (1.2 + (i % 5) * 0.5);
@@ -287,14 +251,13 @@ export default function World({ formations, reduced, lowPower, compact, cutoutUr
       <Atmosphere lowPower={lowPower} />
       <HeroSystem photoUrl={cutoutUrl} interactive={interactive} compact={compact} />
       <CapabilityHub />
-      <RagPipeline />
+      <StobaySystem />
       <GeoScene lowPower={lowPower} />
       <NavScene lowPower={lowPower} />
       <AudioScene />
       <Timeline3D compact={compact} />
-      <ConvergenceScene lowPower={lowPower} />
-      {/* Secondary output of the core; compact layouts use the inline resume link instead. */}
-      {!compact && <ResumeModule />}
+      {/* Final scene; compact layouts show it without pinned node links (plain links instead). */}
+      <OrbitalSystem compact={compact} />
     </>
   );
 }

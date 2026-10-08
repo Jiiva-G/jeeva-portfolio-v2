@@ -9,6 +9,11 @@ export const frame = {
   lowPower: false,
   /** Pointer is over the hero portrait (raycast). */
   portraitHover: false,
+  /** Final scene, smoothed by the orbital system: focused ring (-1 none), its strength, and the CTA pulse wave. */
+  orbitFocusRing: -1,
+  orbitFocusAmt: 0,
+  /** Radius (local units) of the outward pulse after "Get in touch" activates; <0 when idle. */
+  orbitWave: -1,
 };
 
 export const clamp01 = (x: number) => Math.min(Math.max(x, 0), 1);
