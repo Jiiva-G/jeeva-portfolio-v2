@@ -1,0 +1,20 @@
+# Local development for the contact endpoint (POST /api/contact) with `wrangler pages dev`.
+# Copy to .dev.vars (git-ignored) and fill in your own values. Never commit real credentials.
+# Production values are set in the Cloudflare Pages dashboard, not here.
+
+# Secrets
+RESEND_API_KEY=re_your_resend_api_key
+TELEGRAM_BOT_TOKEN=123456789:your_telegram_bot_token
+# Cloudflare's documented always-pass test secret (works with the test site key in .env.example):
+TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
+
+# Configuration
+TELEGRAM_CHAT_ID=your_private_chat_id
+CONTACT_TO_EMAIL=jeevaganesan125@gmail.com
+MAIL_FROM_EMAIL=Jeeva Portfolio <contact@notify.jeevag.in>
+
+# Development only — never set these in production.
+# Turnstile test keys report the hostname "example.com" and are refused unless explicitly allowed.
+CONTACT_ALLOWED_ORIGINS=http://localhost:8788,http://127.0.0.1:8788
+CONTACT_ALLOWED_HOSTNAMES=localhost,127.0.0.1,example.com
+CONTACT_ALLOW_TURNSTILE_TEST_KEYS=true

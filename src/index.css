@@ -337,6 +337,55 @@
     }
   }
 
+  /* Contact form (dialog). */
+  .contact-input {
+    display: block;
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.75rem 0.95rem;
+    border: 1px solid rgb(var(--line) / 0.2);
+    border-radius: 12px;
+    background: rgb(var(--bg) / 0.6);
+    color: rgb(var(--ink));
+    /* 16px keeps iOS Safari from zooming the page when a field is focused. */
+    font-size: 16px;
+    line-height: 1.5;
+    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  textarea.contact-input {
+    min-height: 9.5rem;
+    resize: vertical;
+  }
+  .contact-input:hover {
+    border-color: rgb(var(--line) / 0.32);
+  }
+  .contact-input:focus {
+    border-color: rgb(var(--accent) / 0.75);
+    background: rgb(var(--bg) / 0.85);
+    box-shadow: 0 0 0 3px rgb(var(--accent) / 0.18);
+  }
+  .contact-input:read-only {
+    opacity: 0.7;
+  }
+  .contact-input--invalid,
+  .contact-input--invalid:hover {
+    border-color: rgb(255 155 155 / 0.6);
+  }
+  /* Honeypot: off-screen, not merely transparent, so people never meet it. */
+  .contact-hp {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+  .contact-turnstile {
+    min-height: 65px;
+  }
+  .contact-spinner {
+    animation: contact-spin 0.9s linear infinite;
+  }
+
   .scroll-cue::after {
     content: "";
     position: absolute;
@@ -448,6 +497,9 @@
 @keyframes orbit-scan {
   from { background-position: 0 -60%; }
   to { background-position: 0 160%; }
+}
+@keyframes contact-spin {
+  to { transform: rotate(360deg); }
 }
 @keyframes fade-in {
   from { opacity: 0; }

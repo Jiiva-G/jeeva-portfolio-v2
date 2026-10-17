@@ -8,6 +8,8 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.functions.json --noEmit",
+    "test:contact": "node --test server/contact.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {

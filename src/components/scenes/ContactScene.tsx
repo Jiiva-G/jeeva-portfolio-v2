@@ -5,16 +5,25 @@ import { useCompactLayout } from "@/hooks/useMediaQuery";
 import { orbitNodeLinks, SCENE_INVALIDATE, sceneState, scrollToScene } from "@/lib/sceneStore";
 import { cn } from "@/lib/utils";
 import { ORBITAL, type OrbitNode, type OrbitNodeKind } from "../three/sceneData";
-import { ActionLink, Reveal } from "../primitives";
+import ContactDialog from "../ContactDialog";
+import { ActionButton, ActionLink, Reveal } from "../primitives";
 
-type NodeAction = { href: string; label: string; icon: LucideIcon; scene?: "capabilities" | "systems" | "experience"; download?: string };
+type NodeAction = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  scene?: "capabilities" | "systems" | "experience";
+  download?: string;
+  /** Opens the contact form instead of navigating. */
+  form?: boolean;
+};
 
-/** Where each orbital node leads. Every node is a real link; the 3D node is only its presentation. */
+/** What each orbital node does. Every node is a real control; the 3D node is only its presentation. */
 const NODE_ACTIONS: Record<OrbitNodeKind, NodeAction> = {
   work: { href: "#capabilities", label: "Work — capabilities", icon: Layers, scene: "capabilities" },
   systems: { href: "#systems", label: "Systems", icon: Network, scene: "systems" },
   experience: { href: "#experience", label: "Experience", icon: Milestone, scene: "experience" },
-  contact: { href: `mailto:${links.email}`, label: `Contact — email ${links.email}`, icon: Mail },
+  contact: { href: "", label: "Contact — open the contact form", icon: Mail, form: true },
   resume: { href: profile.resume.href, label: "Download resume PDF", icon: FileDown, download: profile.resume.fileName },
   connect: { href: links.linkedin, label: "Connect on LinkedIn (opens in a new tab)", icon: Handshake },
 };
@@ -30,6 +39,8 @@ export default function ContactScene({ has3D }: { has3D: boolean }) {
   const [copied, setCopied] = useState(false);
   const [online, setOnline] = useState(false);
   const [focus, setFocus] = useState(-1);
+  const [formOpen, setFormOpen] = useState(false);
+  const formOpener = useRef<HTMLElement | null>(null);
   const cta = useRef<HTMLSpanElement>(null);
   const coreSlot = useRef<HTMLDivElement>(null);
   const section = useRef<HTMLElement>(null);
@@ -99,6 +110,10 @@ export default function ContactScene({ has3D }: { has3D: boolean }) {
   };
 
   const resumeAction = NODE_ACTIONS.resume;
+  const openForm = (opener: HTMLElement) => {
+    formOpener.current = opener;
+    setFormOpen(true);
+  };
 
   return (
     <section
@@ -159,9 +174,9 @@ export default function ContactScene({ has3D }: { has3D: boolean }) {
               onFocus={() => setConnection(true)}
               onBlur={() => setConnection(false)}
             >
-              <ActionLink variant="primary" href={`mailto:${links.email}`} aria-label={`Get in touch — email ${links.email}`}>
-                Get in touch <ArrowRight size={16} />
-              </ActionLink>
+              <ActionButton variant="primary" aria-haspopup="dialog" onClick={(e) => openForm(e.currentTarget)}>
+                Get in touch <ArrowRight size={16} aria-hidden="true" />
+              </ActionButton>
             </span>
             {/* Compact screens: Resume sits beside the CTA. Desktop reaches it through node 05 (3D or static). */}
             {compact && (
@@ -210,12 +225,12 @@ export default function ContactScene({ has3D }: { has3D: boolean }) {
           <ul aria-label="Explore the system">
             {ORBITAL.nodes.map((node, i) => (
               <li key={node.kind}>
-                <NodeLink node={node} i={i} pinned active={focus === i} onFocusChange={setNodeFocus} />
+                <NodeLink node={node} i={i} pinned active={focus === i} onFocusChange={setNodeFocus} onOpenForm={openForm} />
               </li>
             ))}
           </ul>
         )}
-        {!has3D && !compact && <StaticOrbit focus={focus} onFocusChange={setNodeFocus} />}
+        {!has3D && !compact && <StaticOrbit focus={focus} onFocusChange={setNodeFocus} onOpenForm={openForm} />}
       </div>
 
       <footer className="relative mx-auto grid w-full max-w-[84rem] grid-cols-[1fr_auto] items-center gap-4 border-t border-line px-5 py-4 font-mono text-[11px] text-muted sm:px-8 md:grid-cols-[1fr_auto_1fr] lg:px-16">
@@ -227,6 +242,8 @@ export default function ContactScene({ has3D }: { has3D: boolean }) {
           Back to top <ArrowUp size={12} aria-hidden="true" />
         </button>
       </footer>
+
+      <ContactDialog open={formOpen} onOpenChange={setFormOpen} returnFocusTo={formOpener.current} />
     </section>
   );
 }
@@ -239,42 +256,47 @@ function spaceActivates(e: KeyboardEvent<HTMLAnchorElement>) {
   }
 }
 
-function NodeLink({ node, i, pinned, active, onFocusChange }: { node: OrbitNode; i: number; pinned: boolean; active: boolean; onFocusChange: (i: number, on: boolean) => void }) {
+function NodeLink({
+  node,
+  i,
+  pinned,
+  active,
+  onFocusChange,
+  onOpenForm,
+}: {
+  node: OrbitNode;
+  i: number;
+  pinned: boolean;
+  active: boolean;
+  onFocusChange: (i: number, on: boolean) => void;
+  onOpenForm: (opener: HTMLElement) => void;
+}) {
   const action = NODE_ACTIONS[node.kind];
   const Icon = action.icon;
   const external = action.href.startsWith("http");
 
-  return (
-    <a
-      ref={(el) => {
-        if (pinned) orbitNodeLinks.els[i] = el;
-      }}
-      href={action.href}
-      aria-label={action.label}
-      {...(action.download ? { download: action.download, type: "application/pdf" } : {})}
-      {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-      data-kind={node.kind}
-      className={cn("orbit-node", pinned ? "orbit-node--pinned" : "orbit-node--static", active && "is-active")}
-      onClick={(e) => {
-        if (action.scene) {
-          e.preventDefault();
-          scrollToScene(action.scene);
-        }
-      }}
-      onKeyDown={action.download ? spaceActivates : undefined}
-      onPointerEnter={() => onFocusChange(i, true)}
-      onPointerLeave={() => onFocusChange(i, false)}
-      onFocus={(e) => {
-        onFocusChange(i, true);
-        // Focused before the scene has placed it (e.g. tabbing in mid-journey): bring the scene in,
-        // as the browser would for an in-flow element. It shows as a tile until it is placed.
-        if (pinned && !e.currentTarget.hasAttribute("data-placed")) {
-          const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-          document.getElementById("contact")?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
-        }
-      }}
-      onBlur={() => onFocusChange(i, false)}
-    >
+  const shared = {
+    ref: (el: HTMLElement | null) => {
+      if (pinned) orbitNodeLinks.els[i] = el;
+    },
+    "aria-label": action.label,
+    "data-kind": node.kind,
+    className: cn("orbit-node", pinned ? "orbit-node--pinned" : "orbit-node--static", active && "is-active"),
+    onPointerEnter: () => onFocusChange(i, true),
+    onPointerLeave: () => onFocusChange(i, false),
+    onFocus: (e: { currentTarget: HTMLElement }) => {
+      onFocusChange(i, true);
+      // Focused before the scene has placed it (e.g. tabbing in mid-journey): bring the scene in,
+      // as the browser would for an in-flow element. It shows as a tile until it is placed.
+      if (pinned && !e.currentTarget.hasAttribute("data-placed")) {
+        const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        document.getElementById("contact")?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+      }
+    },
+    onBlur: () => onFocusChange(i, false),
+  };
+  const content = (
+    <>
       {pinned && <span className="orbit-node__hit" aria-hidden="true" />}
       <span className="orbit-node__body" aria-hidden="true">
         <span className="orbit-node__meta">
@@ -284,12 +306,37 @@ function NodeLink({ node, i, pinned, active, onFocusChange }: { node: OrbitNode;
         <span className="orbit-node__title">{node.title}</span>
         <span className="orbit-node__desc">{node.descriptor}</span>
       </span>
+    </>
+  );
+
+  if (action.form) {
+    return (
+      <button type="button" aria-haspopup="dialog" {...shared} onClick={(e) => onOpenForm(e.currentTarget)}>
+        {content}
+      </button>
+    );
+  }
+  return (
+    <a
+      {...shared}
+      href={action.href}
+      {...(action.download ? { download: action.download, type: "application/pdf" } : {})}
+      {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+      onClick={(e) => {
+        if (action.scene) {
+          e.preventDefault();
+          scrollToScene(action.scene);
+        }
+      }}
+      onKeyDown={action.download ? spaceActivates : undefined}
+    >
+      {content}
     </a>
   );
 }
 
 /** No-WebGL desktop: a still drawing of the orbital system with the six nodes as plain links. */
-function StaticOrbit({ focus, onFocusChange }: { focus: number; onFocusChange: (i: number, on: boolean) => void }) {
+function StaticOrbit({ focus, onFocusChange, onOpenForm }: { focus: number; onFocusChange: (i: number, on: boolean) => void; onOpenForm: (opener: HTMLElement) => void }) {
   return (
     <div className="relative hidden lg:block">
       <svg viewBox="0 0 520 360" className="mx-auto w-full max-w-[34rem]" aria-hidden="true">
@@ -316,7 +363,7 @@ function StaticOrbit({ focus, onFocusChange }: { focus: number; onFocusChange: (
       <ul aria-label="Explore the system" className="mx-auto mt-6 grid max-w-[34rem] grid-cols-2 gap-3">
         {ORBITAL.nodes.map((node, i) => (
           <li key={node.kind}>
-            <NodeLink node={node} i={i} pinned={false} active={focus === i} onFocusChange={onFocusChange} />
+            <NodeLink node={node} i={i} pinned={false} active={focus === i} onFocusChange={onFocusChange} onOpenForm={onOpenForm} />
           </li>
         ))}
       </ul>
